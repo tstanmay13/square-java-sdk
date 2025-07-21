@@ -355,38 +355,51 @@ CreatePaymentResponse payments = square.payments().create(...);
 Map<String, Object> additionalProperties = payments.getAdditionalProperties();
 ```
 
-### Union Types
+### Unions
 
-Union types represent values that can be one of several different types. The SDK supports both discriminated and undiscriminated unions to handle APIs that return different response formats.
+The SDK has native support for unions or polymorphic types. To construct a union type, simply use the relevant static constructor: 
 
-**Direct type checking (discriminated unions):**
+```java
+// Construct an item
+CatalogObject item = CatalogObject.item(CatalogObjectItem.builder()
+  ...
+  .build());
+
+// Construct a image
+CatalogObject image = CatalogObject.image(CatalogObjectImage.builder()
+  ...
+  .build());
+```
+
+If you receive a union type from the API, you can get the underlying type by using the following helper methods: 
 
 ```java
 CatalogObject catalogObject = CatalogObject.item(catalogItemData);
 
 if (catalogObject.isItem()) {
     CatalogObjectItem item = catalogObject.getItem().get();
-    System.out.println("Item name: " + item.getItemData().get().getName().orElse("Unnamed"));
+    System.out.println(item.getItemData());
 }
 ```
 
-**Visitor pattern (discriminated unions):**
+If you would like to exhaustively handle all the potential cases for a union type, the SDK offers a visitor utility that forces you to implement 
+a hanlder for every possible underlying variant of the union. 
 
 ```java
 String result = catalogObject.visit(new CatalogObject.Visitor<String>() {
     @Override
     public String visitItem(CatalogObjectItem item) {
-        return "Item: " + item.getItemData().get().getName().orElse("Unnamed");
+        return "Item";
     }
 
     @Override
     public String visitCategory(CatalogObjectCategory category) {
-        return "Category: " + category.getCategoryData().get().getName().orElse("Unnamed");
+        return "Category";
     }
 
     @Override
     public String visitImage(CatalogObjectImage image) {
-        return "Image: " + image.getId().orElse("No ID");
+        return "Image";
     }
     
     ... 
@@ -398,28 +411,6 @@ String result = catalogObject.visit(new CatalogObject.Visitor<String>() {
 });
 ```
 
-**Working with payment sources (undiscriminated unions):**
-
-```java
-PaymentSource paymentSource = PaymentSource.of("card_token_123");
-
-String sourceType = paymentSource.visit(new PaymentSource.Visitor<String>() {
-    @Override
-    public String visit(String cardToken) {
-        return "Card token: " + cardToken;
-    }
-
-    @Override
-    public String visit(BankAccount bankAccount) {
-        return "Bank account: " + bankAccount.getAccountNumber();
-    }
-
-    @Override
-    public String visit(CashDetails cashDetails) {
-        return "Cash payment";
-    }
-});
-```
 
 ## Contributing
 
