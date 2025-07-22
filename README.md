@@ -145,6 +145,7 @@ InvoicePaymentRequest paymentRequest = InvoicePaymentRequest.builder()
         .build();
 ```
 
+
 ## Versioning
 By default, the SDK is pinned to the version 2025-03-19. If you would like to 
 override this version you can simply pass in a request option.
@@ -353,6 +354,63 @@ You can access the additional properties like so:
 CreatePaymentResponse payments = square.payments().create(...);
 Map<String, Object> additionalProperties = payments.getAdditionalProperties();
 ```
+
+### Unions
+
+The SDK has native support for unions or polymorphic types. To construct a union type, simply use the relevant static constructor: 
+
+```java
+// Construct an item
+CatalogObject item = CatalogObject.item(CatalogObjectItem.builder()
+  ...
+  .build());
+
+// Construct a image
+CatalogObject image = CatalogObject.image(CatalogObjectImage.builder()
+  ...
+  .build());
+```
+
+If you receive a union type from the API, you can get the underlying type by using the following helper methods: 
+
+```java
+CatalogObject catalogObject = CatalogObject.item(catalogItemData);
+
+if (catalogObject.isItem()) {
+    CatalogObjectItem item = catalogObject.getItem().get();
+    System.out.println(item.getItemData());
+}
+```
+
+If you would like to exhaustively handle all the potential cases for a union type, the SDK offers a visitor utility that forces you to implement 
+a hanlder for every possible underlying variant of the union. 
+
+```java
+String result = catalogObject.visit(new CatalogObject.Visitor<String>() {
+    @Override
+    public String visitItem(CatalogObjectItem item) {
+        return "Item";
+    }
+
+    @Override
+    public String visitCategory(CatalogObjectCategory category) {
+        return "Category";
+    }
+
+    @Override
+    public String visitImage(CatalogObjectImage image) {
+        return "Image";
+    }
+    
+    ... 
+
+    @Override
+    public String _visitUnknown(Object unknownType) {
+        return "Unknown catalog type";
+    }
+});
+```
+
 
 ## Contributing
 
